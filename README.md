@@ -10,7 +10,7 @@ Este repositório contém material de apoio para aulas de Git, incluindo:
 ## 📁 Conteúdo
 
 ### 1. Exercício Básico de Git
-- Localização: [`exercicio/README.md`](exercicio/README.md)
+- Localização: [`exercício/README.md`](exercício/README.md)
 - Inclui:
   - Inicialização de repositório (`git init`)
   - Commits (`git add` / `git commit`)
