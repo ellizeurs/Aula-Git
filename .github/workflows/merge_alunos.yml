@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   validate_and_merge:
     runs-on: ubuntu-latest
@@ -37,17 +41,31 @@ jobs:
 
           echo "OK: Alterações válidas para $expected."
 
-      # 3️⃣ Merge automático do PR
-      - name: Merge PR automaticamente
-        if: success()
+      # 3️⃣ Merge automático para PRs internos (sem fork)
+      - name: Merge PR interno automaticamente
+        if: success() && github.event.pull_request.head.repo.full_name == github.repository
         uses: peter-evans/enable-pull-request-automerge@v2
         with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
           pull-request-number: ${{ github.event.pull_request.number }}
           merge-method: merge
 
-      # 4️⃣ Feedback caso o PR seja inválido
+      # 4️⃣ Merge automático para PRs vindos de fork
+      - name: Merge PR de fork automaticamente
+        if: success() && github.event.pull_request.head.repo.full_name != github.repository
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          repository: ${{ github.repository }}
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: merge
+
+      # 5️⃣ Feedback caso o PR seja inválido
       - name: Comentar PR inválido
         if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN || github.token }}
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
           PR_USER=${{ github.actor }}
