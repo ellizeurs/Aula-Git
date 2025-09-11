@@ -1,0 +1,54 @@
+name: Auto Merge Alunos PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate_and_merge:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Checkout do PR
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # 2️⃣ Validação do arquivo do aluno
+      - name: Verifica arquivo do aluno
+        id: check_files
+        run: |
+          PR_USER="${{ github.actor }}"
+          files=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          echo "Arquivos alterados no PR:"
+          echo "$files"
+
+          count=$(echo "$files" | wc -l)
+          if [ "$count" -ne 1 ]; then
+            echo "ERRO: Apenas um arquivo pode ser modificado."
+            exit 1
+          fi
+
+          expected="alunos/${PR_USER}.md"
+          if [ "$files" != "$expected" ]; then
+            echo "ERRO: O arquivo deve ser exatamente '$expected'."
+            exit 1
+          fi
+
+          echo "OK: Alterações válidas para $expected."
+
+      # 3️⃣ Merge automático do PR
+      - name: Merge PR automaticamente
+        if: success()
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          pull-request-number: ${{ github.event.pull_request.number }}
+          merge-method: merge
+
+      # 4️⃣ Feedback caso o PR seja inválido
+      - name: Comentar PR inválido
+        if: failure()
+        run: |
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          PR_USER=${{ github.actor }}
+          gh pr comment $PR_NUMBER --body "❌ PR bloqueado: apenas o arquivo 'alunos/${PR_USER}.md' pode ser modificado."
