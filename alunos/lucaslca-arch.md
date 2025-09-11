@@ -1,0 +1,1 @@
+Sou Lucas Luis Carreiro de Andrade, cursando Engenharia Eletrônica e da Computação na UFRJ, possuo interesse em programação como um todo. A ideia é achar uma área de maior interesse para poder focar e desenvolver mais.
